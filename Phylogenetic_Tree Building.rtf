@@ -1,41 +1,34 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2513
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\margl1440\margr1440\vieww19260\viewh8400\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-
-\f0\fs24 \cf0 #!/bin/bash\
-#SBATCH -p short -N 1 -n 16 --mem 16gb --out phmmer_1job.log\
-module load hmmer/3\
-module unload perl\
-module load parallel\
-ln -s /bigdata/stajichlab/shared/projects/Chytrid/Bd_popgen/Pan_genome/pep . #makes symbolic link\
-curl -O https://www.uniprot.org/uniprot/F4PDB9.fasta\
+#!/bin/bash
+#SBATCH -p short -N 1 -n 16 --mem 16gb --out phmmer_1job.log
+module load hmmer/3
+module unload perl
+module load parallel
+ln -s /bigdata/stajichlab/shared/projects/Chytrid/Bd_popgen/Pan_genome/pep . #makes symbolic link
+curl -O https://www.uniprot.org/uniprot/F4PDB9.fasta
 parallel -j 16 phmmer -E 1e-5 --domtbl \{/.\}.domtbl F4PDB9.fasta \{\} \\> \{/.\}.phmmer ::: $(ls pep/*.aa.fasta)#Downloads all files in a loop\
 \
-cat pep/*.fasta > allseqs.aa # combine all the peptide files into one file\
+cat pep/*.fasta > allseqs.aa # combine all the peptide files into one file
 esl-sfetch --index allseqs.aa\
-grep -h -v '^#' *.domtbl | awk '\{print $1\}' | sort | uniq | esl-sfetch -f allseqs.aa - > F4PDB9.hits.aa.fa # Extraction of the hits to a file\
+grep -h -v '^#' *.domtbl | awk '\{print $1\}' | sort | uniq | esl-sfetch -f allseqs.aa - > F4PDB9.hits.aa.fa # Extraction of the hits to a file
 \
 \
-grep ">" F4PDB9.hits.aa.fa | cut -d\\| -f1 | sed 's/>//' | sort | uniq -c # count how many copies for each strain\
+grep ">" F4PDB9.hits.aa.fa | cut -d\\| -f1 | sed 's/>//' | sort | uniq -c # count how many copies for each strain
 \
 \
-curl -o Peptidase_M36.hmm http://pfam.xfam.org/family/PF02128/hmm # Peptidase M36\
+curl -o Peptidase_M36.hmm http://pfam.xfam.org/family/PF02128/hmm # Peptidase M36
 \
 \
-hmmsearch --domtbl Peptidase_M36.F4PDB9.hits.domtbl -E 1e-15 Peptidase_M36.hmm F4PDB9.hits.aa.fa > Peptidase_M36.F4PDB9.hits.hmmsearch\
+hmmsearch --domtbl Peptidase_M36.F4PDB9.hits.domtbl -E 1e-15 Peptidase_M36.hmm F4PDB9.hits.aa.fa > Peptidase_M36.F4PDB9.hits.hmmsearch
 \
-module load cd-hit\
-cd-hit -i F4PDB9.hits.aa.fa -o F4PDB9.90.hits.aa.fa -c  0.9 -n 5 -M 16000 -d 0 -T 8, #cut down hits to at least 90%\
+module load cd-hit
+cd-hit -i F4PDB9.hits.aa.fa -o F4PDB9.90.hits.aa.fa -c  0.9 -n 5 -M 16000 -d 0 -T 8, #cut down hits to at least 90%
 \
-hmmalign Peptidase_M36.hmm F4PDB9.hits.90.aa.fa > F4PDB9.hits.aa.slx # Align the hits to the HMM\
+hmmalign Peptidase_M36.hmm F4PDB9.hits.90.aa.fa > F4PDB9.hits.aa.slx # Align the hits to the HMM
 \
-esl-reformat afa F4PDB9.hits.aa.slx > F4PDB9.hits.90.aa.afa # convert to fasta multi-align format\
+esl-reformat afa F4PDB9.hits.aa.slx > F4PDB9.hits.90.aa.afa # convert to fasta multi-align format
 \
-#!/bin/bash\
-#SBATCH -p short -N 1 -n 16 --mem 16gb --out make_tree.log\
-module unload cd-hit\
-module load fasttree\
+#!/bin/bash
+#SBATCH -p short -N 1 -n 16 --mem 16gb --out make_tree.log
+module unload cd-hit
+module load fasttree
 FastTreeMP -gamma -lg < F4P9E4.hits.90.aa.afa > F4P9E4.hits.aa.FT.tre}
