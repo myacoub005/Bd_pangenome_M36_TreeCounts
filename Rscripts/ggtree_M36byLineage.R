@@ -8,6 +8,7 @@ library(treeio)
 library(ggstance)
 library(ggtreeExtra)
 library(RColorBrewer)
+library(wesanderson)
 
 geneCopies <- read.table("M36_loci.by.lineage.tab", header=TRUE, sep="\t", row.names = 1)
 geneCopies
@@ -76,9 +77,10 @@ mycolors <- colorRampPalette(brewer.pal(10, "Set3"))(nb.cols)
 # Create a ggplot with 21 colors
 # Use scale_fill_manual
 
+pal <- wes_palette("Zissou1", 100, type = "continuous")
 
 phtmap <- gheatmap(p1, geneCopiesCount, width=0.5, offset=0.5, legend_title="M36 Loci", colnames_position="bottom", colnames_angle=90, colnames_offset_y=0, hjust=1, font.size=2) +   
-  scale_fill_gradient2("") +
+  scale_fill_gradientn(colours = pal) +
   scale_y_continuous(limits=c(0, 55)) + theme_tree2(legend.position="right")
 phtmap
 
